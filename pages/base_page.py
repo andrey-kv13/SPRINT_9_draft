@@ -1,7 +1,7 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from config.config import Config
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 
 class BasePage:
     """Базовый класс с общими методами для работы со страницами"""
@@ -38,53 +38,18 @@ class BasePage:
     def scroll_to_element(self, locator):
         """Скролл к указанному элементу"""     
         element = self.find_element(locator)
-        if element is not None:
+        if element:
             self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        else:
-            raise TimeoutException(f"Элемент не найден для скролла: {locator}")
 
     def click(self, locator):
         """Клик по элементу со скроллом и ожиданием кликабельности"""   
         try:
-            # Сначала ждем появления элемента в DOM
-            element = self.wait.until(EC.presence_of_element_located(locator))
-            if element is None:
-                # Пытаемся найти элемент через альтернативные методы
-                try:
-                    element = self.driver.find_element(*locator)
-                except NoSuchElementException:
-                    current_url = self.driver.current_url
-                    page_source_snippet = self.driver.page_source[:500] if len(self.driver.page_source) > 500 else self.driver.page_source
-                    raise TimeoutException(
-                        f"Элемент не найден: {locator}\n"
-                        f"Текущий URL: {current_url}\n"
-                        f"Фрагмент страницы: {page_source_snippet}"
-                    )
-            # Скроллим к элементу
-            try:
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", element)
-                # Небольшая пауза после скролла
-                import time
-                time.sleep(0.5)
-            except Exception:
-                pass  # Продолжаем даже если скролл не удался
-            # Ждем, пока элемент станет видимым и кликабельным
-            element = self.wait.until(EC.visibility_of_element_located(locator))
+            self.scroll_to_element(locator)
             element = self.wait.until(EC.element_to_be_clickable(locator))
             element.click()
-        except (TimeoutException, ElementClickInterceptedException) as e:
-            # Если обычный клик не работает, используем JavaScript клик
-            try:
-                element = self.wait.until(EC.presence_of_element_located(locator))
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                self.driver.execute_script("arguments[0].click();", element)
-            except TimeoutException:
-                current_url = self.driver.current_url
-                raise TimeoutException(
-                    f"Элемент не найден для клика: {locator}\n"
-                    f"Текущий URL: {current_url}\n"
-                    f"Оригинальная ошибка: {str(e)}"
-                )
+        except ElementClickInterceptedException:
+            element = self.wait.until(EC.presence_of_element_located(locator))
+            self.driver.execute_script("arguments[0].click();", element)
     
     def click_with_js(self, locator):
         """Клик по элементу через JavaScript (обходит перехват клика)"""
@@ -93,14 +58,10 @@ class BasePage:
     
     def send_keys(self, locator, text):
         """Ввод текста в поле"""
-        try:
-            element = self.find_element(locator)
-            if element is None:
-                raise TimeoutException(f"Элемент не найден для ввода текста: {locator}")
+        element = self.find_element(locator)
+        if element:
             element.clear()
             element.send_keys(text)
-        except TimeoutException:
-            raise TimeoutException(f"Не удалось ввести текст в элемент: {locator}")
     
     def get_element_text(self, locator):
         try:

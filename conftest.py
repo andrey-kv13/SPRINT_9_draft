@@ -58,22 +58,6 @@ def main_page(driver):
     """Фикстура для главной страницы"""
     page = MainPage(driver)
     driver.get(Config.BASE_URL)
-    # Ждем загрузки страницы
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.common.by import By
-    from selenium.common.exceptions import TimeoutException
-    wait = WebDriverWait(driver, Config.TIMEOUT)
-    try:
-        # Ждем, пока страница загрузится (проверяем наличие body)
-        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        # Ждем, пока JavaScript загрузится (проверяем readyState)
-        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
-        # Даем дополнительное время для загрузки динамических элементов
-        import time
-        time.sleep(3)
-    except TimeoutException:
-        pass  # Продолжаем даже если ожидание не сработало
     return page
 
 
