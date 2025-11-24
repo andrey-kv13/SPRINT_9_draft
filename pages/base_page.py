@@ -38,18 +38,30 @@ class BasePage:
     def scroll_to_element(self, locator):
         """Скролл к указанному элементу"""     
         element = self.find_element(locator)
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        if element is not None:
+            self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        else:
+            raise TimeoutException(f"Элемент не найден для скролла: {locator}")
 
     def click(self, locator):
         """Клик по элементу со скроллом и ожиданием кликабельности"""   
         try:
-            self.scroll_to_element(locator)
+            # Сначала находим элемент и проверяем его наличие
+            element = self.wait.until(EC.presence_of_element_located(locator))
+            if element is None:
+                raise TimeoutException(f"Элемент не найден: {locator}")
+            # Скроллим к элементу
+            self.driver.execute_script("arguments[0].scrollIntoView();", element)
+            # Ждем, пока элемент станет кликабельным
             element = self.wait.until(EC.element_to_be_clickable(locator))
             element.click()
         except (TimeoutException, ElementClickInterceptedException):
             # Если обычный клик не работает, используем JavaScript клик
-            element = self.wait.until(EC.presence_of_element_located(locator))
-            self.driver.execute_script("arguments[0].click();", element)
+            try:
+                element = self.wait.until(EC.presence_of_element_located(locator))
+                self.driver.execute_script("arguments[0].click();", element)
+            except TimeoutException:
+                raise TimeoutException(f"Элемент не найден для клика: {locator}")
     
     def click_with_js(self, locator):
         """Клик по элементу через JavaScript (обходит перехват клика)"""
@@ -60,20 +72,28 @@ class BasePage:
         """Ввод текста в поле"""
         try:
             element = self.find_element(locator)
+            if element is None:
+                raise TimeoutException(f"Элемент не найден для ввода текста: {locator}")
             element.clear()
             element.send_keys(text)
         except TimeoutException:
-            pass
+            raise TimeoutException(f"Не удалось ввести текст в элемент: {locator}")
     
     def get_element_text(self, locator):
         try:
-            return self.find_element(locator).text
+            element = self.find_element(locator)
+            if element is None:
+                return None
+            return element.text
         except TimeoutException:
             return None
     
     def get_attribute(self, locator, attribute):
         try:
-            return self.find_element(locator).get_attribute(attribute)
+            element = self.find_element(locator)
+            if element is None:
+                return None
+            return element.get_attribute(attribute)
         except TimeoutException:
             return None
     
