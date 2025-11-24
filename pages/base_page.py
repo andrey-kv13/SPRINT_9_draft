@@ -49,19 +49,37 @@ class BasePage:
             # Сначала находим элемент и проверяем его наличие
             element = self.wait.until(EC.presence_of_element_located(locator))
             if element is None:
-                raise TimeoutException(f"Элемент не найден: {locator}")
+                # Пытаемся найти элемент через альтернативные методы
+                try:
+                    element = self.driver.find_element(*locator)
+                except:
+                    current_url = self.driver.current_url
+                    page_source_snippet = self.driver.page_source[:500] if len(self.driver.page_source) > 500 else self.driver.page_source
+                    raise TimeoutException(
+                        f"Элемент не найден: {locator}\n"
+                        f"Текущий URL: {current_url}\n"
+                        f"Фрагмент страницы: {page_source_snippet}"
+                    )
             # Скроллим к элементу
-            self.driver.execute_script("arguments[0].scrollIntoView();", element)
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+            except:
+                pass  # Продолжаем даже если скролл не удался
             # Ждем, пока элемент станет кликабельным
             element = self.wait.until(EC.element_to_be_clickable(locator))
             element.click()
-        except (TimeoutException, ElementClickInterceptedException):
+        except (TimeoutException, ElementClickInterceptedException) as e:
             # Если обычный клик не работает, используем JavaScript клик
             try:
                 element = self.wait.until(EC.presence_of_element_located(locator))
                 self.driver.execute_script("arguments[0].click();", element)
             except TimeoutException:
-                raise TimeoutException(f"Элемент не найден для клика: {locator}")
+                current_url = self.driver.current_url
+                raise TimeoutException(
+                    f"Элемент не найден для клика: {locator}\n"
+                    f"Текущий URL: {current_url}\n"
+                    f"Оригинальная ошибка: {str(e)}"
+                )
     
     def click_with_js(self, locator):
         """Клик по элементу через JavaScript (обходит перехват клика)"""
