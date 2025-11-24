@@ -46,7 +46,7 @@ class BasePage:
     def click(self, locator):
         """Клик по элементу со скроллом и ожиданием кликабельности"""   
         try:
-            # Сначала находим элемент и проверяем его наличие
+            # Сначала ждем появления элемента в DOM
             element = self.wait.until(EC.presence_of_element_located(locator))
             if element is None:
                 # Пытаемся найти элемент через альтернативные методы
@@ -62,16 +62,21 @@ class BasePage:
                     )
             # Скроллим к элементу
             try:
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", element)
+                # Небольшая пауза после скролла
+                import time
+                time.sleep(0.5)
             except Exception:
                 pass  # Продолжаем даже если скролл не удался
-            # Ждем, пока элемент станет кликабельным
+            # Ждем, пока элемент станет видимым и кликабельным
+            element = self.wait.until(EC.visibility_of_element_located(locator))
             element = self.wait.until(EC.element_to_be_clickable(locator))
             element.click()
         except (TimeoutException, ElementClickInterceptedException) as e:
             # Если обычный клик не работает, используем JavaScript клик
             try:
                 element = self.wait.until(EC.presence_of_element_located(locator))
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
                 self.driver.execute_script("arguments[0].click();", element)
             except TimeoutException:
                 current_url = self.driver.current_url

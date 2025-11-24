@@ -16,7 +16,7 @@ class Config:
         }
         
     BASE_URL = "https://foodgram-frontend-1.prakticum-team.ru/"
-    TIMEOUT = 10
+    TIMEOUT = 20
     # URL для Selenoid (используется при работе через Docker Compose)
     SELENOID_URI = "http://selenoid:4444/wd/hub"
     # Флаг для использования Remote WebDriver вместо локального

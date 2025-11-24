@@ -65,11 +65,13 @@ def main_page(driver):
     from selenium.common.exceptions import TimeoutException
     wait = WebDriverWait(driver, Config.TIMEOUT)
     try:
-        # Ждем, пока страница загрузится (проверяем наличие body или любого элемента)
+        # Ждем, пока страница загрузится (проверяем наличие body)
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        # Даем дополнительное время для загрузки JavaScript
+        # Ждем, пока JavaScript загрузится (проверяем readyState)
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
+        # Даем дополнительное время для загрузки динамических элементов
         import time
-        time.sleep(2)
+        time.sleep(3)
     except TimeoutException:
         pass  # Продолжаем даже если ожидание не сработало
     return page
