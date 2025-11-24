@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  selenoid:
+    image: aerokube/selenoid:latest-release
+    network_mode: bridge
+    ports:
+      - "4444:4444"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./browser.json:/etc/selenoid/browsers.json:ro
+    command: ["-conf", "/etc/selenoid/browsers.json", "-limit", "10"]
+    environment:
+      - OVERRIDE_VIDEO_OUTPUT_DIR=/opt/selenoid/video/
+
