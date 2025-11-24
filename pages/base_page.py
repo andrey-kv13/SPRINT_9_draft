@@ -1,7 +1,7 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from config.config import Config
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, NoSuchElementException
 
 class BasePage:
     """Базовый класс с общими методами для работы со страницами"""
@@ -52,7 +52,7 @@ class BasePage:
                 # Пытаемся найти элемент через альтернативные методы
                 try:
                     element = self.driver.find_element(*locator)
-                except:
+                except NoSuchElementException:
                     current_url = self.driver.current_url
                     page_source_snippet = self.driver.page_source[:500] if len(self.driver.page_source) > 500 else self.driver.page_source
                     raise TimeoutException(
@@ -63,7 +63,7 @@ class BasePage:
             # Скроллим к элементу
             try:
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-            except:
+            except Exception:
                 pass  # Продолжаем даже если скролл не удался
             # Ждем, пока элемент станет кликабельным
             element = self.wait.until(EC.element_to_be_clickable(locator))

@@ -61,11 +61,12 @@ def main_page(driver):
     # Ждем загрузки страницы
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.common.by import By
     from selenium.common.exceptions import TimeoutException
     wait = WebDriverWait(driver, Config.TIMEOUT)
     try:
         # Ждем, пока страница загрузится (проверяем наличие body или любого элемента)
-        wait.until(EC.presence_of_element_located(("tag_name", "body")))
+        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         # Даем дополнительное время для загрузки JavaScript
         import time
         time.sleep(2)
